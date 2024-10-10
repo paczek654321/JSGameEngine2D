@@ -1,6 +1,5 @@
 /*
 ToDo
-- don't displace an object if its position before the application of velocity was within colliders bounds on an axis
 - change variable and function names to be easier to read
 - add some comments
 */
@@ -226,12 +225,18 @@ function calculate_1D_displacement
 	}
 }
 
-function calculate_2D_r2r_displacement(body, collider)
+function calculate_2D_r2r_displacement(body, collider, last_pos)
 {
 	let displacement = new vec2(0)
-	displacement.x =calculate_1D_displacement
+	let is_sliding = new vec2(0)
+	displacement.x=calculate_1D_displacement
 	(
 		body.pos.x, body.size.x, collider.pos.x,
+		collider.size.x, body.vel.x
+	)
+	is_sliding.x=calculate_1D_displacement
+	(
+		last_pos.x, body.size.x, collider.pos.x,
 		collider.size.x, body.vel.x
 	)
 	displacement.y=calculate_1D_displacement
@@ -239,22 +244,28 @@ function calculate_2D_r2r_displacement(body, collider)
 		body.pos.y, body.size.y, collider.pos.y,
 		collider.size.y, body.vel.y
 	)
+	is_sliding.y=calculate_1D_displacement
+	(
+		last_pos.y, body.size.y, collider.pos.y,
+		collider.size.y, body.vel.y
+	)
 	let displacement_x_copy = displacement.x
-	displacement.x = body.vel.x != 0 && displacement.y !=0 ?
+	displacement.x = !is_sliding.x && body.vel.x != 0 && displacement.y !=0 ?
 		displacement.x : 0
-	displacement.y = body.vel.y != 0 && displacement_x_copy !=0 ?
+	displacement.y = !is_sliding.y && body.vel.y != 0 && displacement_x_copy !=0 ?
 		displacement.y : 0
 	return displacement
 }
 
 function move_and_collide(body, colliders)
 {
+	let last_pos = body.pos.add(new vec2(0))
 	body.pos.ADD(body.vel.div(fps))
 	colliders.splice(body.index, 1)
 	let final_displacement = new vec2(0)
 	for (let collider of colliders)
 	{
-		let displacement = calculate_2D_r2r_displacement(body, collider)
+		let displacement = calculate_2D_r2r_displacement(body, collider, last_pos)
 		if (Math.abs(displacement.y) > Math.abs(final_displacement.y))
 		{
 			final_displacement.y = displacement.y
