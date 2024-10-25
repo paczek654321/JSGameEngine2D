@@ -1,13 +1,31 @@
 /*
 ToDo
-- change variable and function names to be easier to read
-- add some comments
 */
 
 const fps = 60
 
 window.onload = () =>
 {
+	let inputs = {"KeyW": 0, "KeyS": 0, "KeyA": 0, "KeyD": 0}
+	let listen = Object.keys(inputs)
+
+	addEventListener("keydown", keydown)
+	addEventListener("keyup", keyup)
+
+	document.addEventListener('mousedown', function(event)
+	{
+		let mouse_pos = new vec2(event.clientX, event.clientY)
+	});
+
+	function keydown(event)
+	{
+		if (listen.includes(event.code)) {inputs[event.code]=1}
+	}
+	function keyup(event)
+	{
+		if (listen.includes(event.code)) {inputs[event.code]=0}
+	}
+
 	const canvas = new Canvas(new vec2(20), 20, "canvas")
 
 	let bodies = []
@@ -15,17 +33,25 @@ window.onload = () =>
 	(new object(
 		bodies.length, SHAPE.rect, 1,
 		new vec2(1, 1), new vec2(0, 0),
-		new vec2(1, 2), "lime"
+		new vec2(0, 0), "chartreuse"
 	))
 	bodies.push
 	(new object(
-		bodies.length, SHAPE.rect, 1,
+		bodies.length, SHAPE.circle, 1,
 		new vec2(1, 1), new vec2(3, 6),
 		new vec2(0, 0), "red"
 	))
+	//bodies.push
+	//(new object(
+	//	bodies.length, SHAPE.rect, 1,
+	//	new vec2(1, 1), new vec2(4, 5),
+	//	new vec2(0, 0), "cyan"
+	//))
 
 	function frame()
 	{
+		bodies[0].vel.x = (inputs["KeyD"]-inputs["KeyA"])*2
+		bodies[0].vel.y = (inputs["KeyS"]-inputs["KeyW"])*2
 		canvas.clear()
 		for (let body of bodies)
 		{
@@ -61,6 +87,14 @@ class vec2
 	{
 		return this.x === 0 && this.y === 0
 	}
+	magnitude()
+	{
+		return Math.sqrt(Math.pow(this.x ,2), Math.pow(this.y, 2))
+	}
+	normalized()
+	{
+		return this.div(this.magnitude())
+	}
 	ADD(value = new vec2(0))
 	{
 		this.x += value.x
@@ -83,7 +117,7 @@ class vec2
 	{
 		if (!value.x)
 		{
-			value = new(vec2(value))
+			value = new vec2(value)
 		}
 		this.x /= value.x
 		this.y /= value.y
@@ -95,6 +129,23 @@ class vec2
 			value = new vec2(value)
 		}
 		return new vec2(this.x / value.x, this.y / value.y)
+	}
+	MUL(value = new vec2(0))
+	{
+		if (!value.x)
+		{
+			value = new vec2(value)
+		}
+		this.x *= value.x
+		this.y *= value.y
+	}
+	mul(value = new vec2(0))
+	{
+		if (!value.x)
+		{
+			value = new vec2(value)
+		}
+		return new vec2(this.x * value.x, this.y * value.y)
 	}
 }
 
@@ -188,6 +239,13 @@ function in_range_oc(num, start, end)
 {
 	return start < num && num <= end
 }
+function find_closest(p1, p2, target, addition=false)
+{
+	if (addition) {p2+=p1}
+	let out = [p1, p2]
+	return out[Number(Math.abs(p1-target)>(p2-target))]
+}
+
 /*function in_range_oo(num, start, end)
 {
 	return start < num && num < end
@@ -203,7 +261,7 @@ function range_in_range(s1, e1, s2, e2, additon)
 	return in_range_oo(s1, s2, e2) || in_range_oo(e2, s2, e2)
 }*/
 
-function calculate_1D_displacement
+function calculate_1D_r2r_displacement
 (
 	bPos, bSize, cPos,
 	cSize, velocity
@@ -229,22 +287,22 @@ function calculate_2D_r2r_displacement(body, collider, last_pos)
 {
 	let displacement = new vec2(0)
 	let is_sliding = new vec2(0)
-	displacement.x=calculate_1D_displacement
+	displacement.x=calculate_1D_r2r_displacement
 	(
 		body.pos.x, body.size.x, collider.pos.x,
 		collider.size.x, body.vel.x
 	)
-	is_sliding.x=calculate_1D_displacement
+	is_sliding.x=calculate_1D_r2r_displacement
 	(
 		last_pos.x, body.size.x, collider.pos.x,
 		collider.size.x, body.vel.x
 	)
-	displacement.y=calculate_1D_displacement
+	displacement.y=calculate_1D_r2r_displacement
 	(
 		body.pos.y, body.size.y, collider.pos.y,
 		collider.size.y, body.vel.y
 	)
-	is_sliding.y=calculate_1D_displacement
+	is_sliding.y=calculate_1D_r2r_displacement
 	(
 		last_pos.y, body.size.y, collider.pos.y,
 		collider.size.y, body.vel.y
@@ -265,7 +323,28 @@ function move_and_collide(body, colliders)
 	let final_displacement = new vec2(0)
 	for (let collider of colliders)
 	{
-		let displacement = calculate_2D_r2r_displacement(body, collider, last_pos)
+		let displacement
+		if (body.shape+collider.shape==SHAPE.rect*2)
+		{
+			displacement = calculate_2D_r2r_displacement(body, collider, last_pos)	
+		}
+		else if (body.shape === SHAPE.rect && collider.shape === SHAPE.circle)
+		{
+			let closest = new vec2(0)
+			closest.x = find_closest(body.pos.x, body.size.x, collider.pos.x+(collider.size.x/2), true)
+			closest.y = find_closest(body.pos.y, body.size.y, collider.pos.y+(collider.size.x/2), true)
+			displacement = new vec2(0)
+			let distance = closest.x-collider.pos.x-(collider.size.x/2)
+			if (Math.abs(distance)<collider.size.x/2) {displacement.x = -distance}
+			distance = closest.y-collider.pos.y-(collider.size.x/2)
+			if (Math.abs(distance)<collider.size.y/2) {displacement.y = -distance}
+			displacement.MUL(body.vel.magnitude())
+			if (displacement.x === 0 || displacement.y === 0)
+			{
+				displacement = new vec2(0)
+			}
+		}
+
 		if (Math.abs(displacement.y) > Math.abs(final_displacement.y))
 		{
 			final_displacement.y = displacement.y
