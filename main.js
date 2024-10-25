@@ -89,7 +89,7 @@ class vec2
 	}
 	magnitude()
 	{
-		return Math.sqrt(Math.pow(this.x ,2), Math.pow(this.y, 2))
+		return Math.sqrt(Math.pow(this.x ,2) + Math.pow(this.y, 2))
 	}
 	normalized()
 	{
@@ -115,7 +115,7 @@ class vec2
 	}
 	DIV(value = new vec2(0))
 	{
-		if (!value.x)
+		if (value.x === undefined)
 		{
 			value = new vec2(value)
 		}
@@ -124,7 +124,7 @@ class vec2
 	}
 	div(value = new vec2(0))
 	{
-		if (!value.x)
+		if (value.x === undefined)
 		{
 			value = new vec2(value)
 		}
@@ -132,7 +132,7 @@ class vec2
 	}
 	MUL(value = new vec2(0))
 	{
-		if (!value.x)
+		if (value.x === undefined)
 		{
 			value = new vec2(value)
 		}
@@ -141,7 +141,7 @@ class vec2
 	}
 	mul(value = new vec2(0))
 	{
-		if (!value.x)
+		if (value.x === undefined)
 		{
 			value = new vec2(value)
 		}
@@ -338,10 +338,17 @@ function move_and_collide(body, colliders)
 			if (Math.abs(distance)<collider.size.x/2) {displacement.x = -distance}
 			distance = closest.y-collider.pos.y-(collider.size.x/2)
 			if (Math.abs(distance)<collider.size.y/2) {displacement.y = -distance}
-			displacement.MUL(body.vel.magnitude())
 			if (displacement.x === 0 || displacement.y === 0)
 			{
 				displacement = new vec2(0)
+			}
+			else
+			{
+				console.log(displacement)
+				displacement.MUL(body.vel.normalized())
+				console.log(body.vel.normalized())
+				console.log(displacement)
+				console.log("----------------------------------")
 			}
 		}
 
