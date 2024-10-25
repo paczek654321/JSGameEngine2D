@@ -95,6 +95,10 @@ class vec2
 	{
 		return this.div(this.magnitude())
 	}
+	abs()
+	{
+		return new vec2(Math.abs(this.x), Math.abs(this.y))
+	}
 	ADD(value = new vec2(0))
 	{
 		this.x += value.x
@@ -130,7 +134,7 @@ class vec2
 		}
 		return new vec2(this.x / value.x, this.y / value.y)
 	}
-	MUL(value = new vec2(0))
+		MUL(value = new vec2(0))
 	{
 		if (value.x === undefined)
 		{
@@ -335,9 +339,9 @@ function move_and_collide(body, colliders)
 			closest.y = find_closest(body.pos.y, body.size.y, collider.pos.y+(collider.size.x/2), true)
 			displacement = new vec2(0)
 			let distance = closest.x-collider.pos.x-(collider.size.x/2)
-			if (Math.abs(distance)<collider.size.x/2) {displacement.x = -distance}
+			if (Math.abs(distance)<collider.size.x/2) {displacement.x = -distance/2}
 			distance = closest.y-collider.pos.y-(collider.size.x/2)
-			if (Math.abs(distance)<collider.size.y/2) {displacement.y = -distance}
+			if (Math.abs(distance)<collider.size.y/2) {displacement.y = -distance/2}
 			if (displacement.x === 0 || displacement.y === 0)
 			{
 				displacement = new vec2(0)
@@ -345,8 +349,8 @@ function move_and_collide(body, colliders)
 			else
 			{
 				console.log(displacement)
-				displacement.MUL(body.vel.normalized())
-				console.log(body.vel.normalized())
+				displacement.MUL(body.vel.normalized().abs())
+				console.log(body.vel.normalized().abs())
 				console.log(displacement)
 				console.log("----------------------------------")
 			}
